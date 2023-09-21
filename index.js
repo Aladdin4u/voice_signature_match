@@ -10,21 +10,13 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 const PORT = process.env.PORT || 3000;
 
-// C:/cb/cb-js
-console.log("dir-", __filename);
-
-// C:\cb\cb-js\index.html
 console.log(path.join(__dirname, "/index.html"));
 const signatureRequestApi = new DropboxSign.SignatureRequestApi();
 
 // Configure HTTP basic authorization: api_key
 signatureRequestApi.username = process.env.API_KEY;
 
-// or, configure Bearer (JWT) authorization: oauth2
-// signatureRequestApi.accessToken = "YOUR_ACCESS_TOKEN";
-
 app.get("/", (req, res) => {
-  //   res.send("hello world!");
   res.sendFile(path.join(__dirname + "/index.html"));
 });
 
