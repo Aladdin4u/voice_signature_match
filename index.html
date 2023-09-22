@@ -14,6 +14,50 @@
   <form action="/sign" method="post">
     <input type="submit" value="send file">
   </form>
+
+  <button id="startRecord">Start Recording</button>
+  <button id="stopRecord" disabled>Stop Recording</button>
+  <audio id="audioPlayer" controls></audio>
+
+  <script>
+    let mediaRecorder;
+    let audioChunks = [];
+
+    const startRecordButton = document.getElementById('startRecord');
+    const stopRecordButton = document.getElementById('stopRecord');
+    const audioPlayer = document.getElementById('audioPlayer');
+
+    startRecordButton.addEventListener('click', startRecording);
+    stopRecordButton.addEventListener('click', stopRecording);
+
+    function startRecording() {
+      navigator.mediaDevices.getUserMedia({
+          audio: true
+        })
+        .then(stream => {
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, {
+              type: 'audio/wav'
+            });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            audioPlayer.src = audioUrl;
+          };
+          mediaRecorder.start();
+          startRecordButton.disabled = true;
+          stopRecordButton.disabled = false;
+        })
+        .catch(error => console.error('Error accessing microphone:', error));
+    }
+
+    function stopRecording() {
+      mediaRecorder.stop();
+      startRecordButton.disabled = false;
+      stopRecordButton.disabled = true;
+    }
+  </script>
+
 </body>
 
 </html>

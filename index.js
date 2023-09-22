@@ -1,14 +1,70 @@
 import express from "express";
 import dotenv from "dotenv";
+import nodeRecordLpcm16 from "node-record-lpcm16";
+const recorder = nodeRecordLpcm16;
 import * as DropboxSign from "@dropbox/sign";
 const app = express();
 import fs from "fs";
 import path from "path";
+import { delimiter } from "path";
+
+const paths = process.env.PATH.split(delimiter);
+paths.push("/c/Program Files (x86)/sox-14-4-2/sox");
+process.env.PATH = paths.join(delimiter);
+
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config();
 const PORT = process.env.PORT || 3000;
+
+
+const recordingOptions = {
+  sampleRate: 16000, // 16kHz sample rate
+  channels: 1,       // Mono channel
+  verbose: true      // Print recording status
+};
+
+const recording = recorder.record(recordingOptions);
+const fileStream = fs.createWriteStream('recordedAudio.wav', { encoding: 'binary' });
+recording.stream().on('error', (error) => {
+  console.error('Error:', error);
+  recording.stop();
+  fileStream.end();
+}).pipe(fileStream);
+
+const recordingDuration = 5000; // Record for 5 seconds
+setTimeout(() => {
+  recording.stop(); // Stop recording
+  fileStream.end(); // Close the file stream
+  console.log(`Recording saved as recordedAudio.wav`);
+}, recordingDuration);
+
+
+
+// const file = fs.createWriteStream("test.wav", { encoding: "binary" });
+// const recording = recorder.record();
+// recording
+//   .stream()
+//   .on("error", (err) => {
+//     console.error("recorder threw an error:", err);
+//   })
+//   .pipe(file);
+
+// // Pause recording after one second
+// setTimeout(() => {
+//   recording.pause();
+// }, 1000);
+
+// // Resume another second later
+// setTimeout(() => {
+//   recording.resume();
+// }, 2000);
+
+// // Stop recording after three seconds
+// setTimeout(() => {
+//   recording.stop();
+// }, 3000);
 
 console.log(path.join(__dirname, "/index.html"));
 const signatureRequestApi = new DropboxSign.SignatureRequestApi();
@@ -47,7 +103,7 @@ app.post("/sign", (req, res) => {
 
   // Upload a local file
   const file = fs.createReadStream("client_proposal.pdf");
-//   console.log(file);
+  //   console.log(file);
   // or, upload from buffer
   //   const fileBuffer = {
   //     value: fs.readFileSync("example_signature_request.pdf"),
@@ -87,11 +143,11 @@ app.post("/sign", (req, res) => {
   result
     .then((response) => {
       console.log(response.body);
-    //   res.send("successfull");
+      //   res.send("successfull");
     })
     .catch((error) => {
       console.log("Exception when calling Dropbox Sign API:");
-    //   res.send("Failed: ", error.body);
+      //   res.send("Failed: ", error.body);
       console.log(error.body);
     });
 });
